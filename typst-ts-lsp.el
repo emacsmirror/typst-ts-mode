@@ -47,18 +47,22 @@ Will override old versions."
   (interactive)
   (unless (file-exists-p typst-ts-lsp-download-path)
     (make-directory (file-name-directory typst-ts-lsp-download-path) t))
-  (with-file-modes (logior (file-modes typst-ts-lsp-download-path) #o100)
-    (url-copy-file
-     (concat
-      "https://github.com/Myriad-Dreamin/tinymist/releases/latest/download/tinymist-"
-      (pcase system-type
-        ('gnu/linux "linux")
-        ('darwin "darwin")
-        ('windows-nt "win32")
-        (_ "linux"))
-      ;; TODO too lazy to find out all the arch suffixes
-      "-x64")
-     typst-ts-lsp-download-path t)))
+  (let ((url "https://github.com/Myriad-Dreamin/tinymist/releases/latest/download/tinymist-installer.sh")
+        (file (make-temp-file "script-" nil ".sh"))
+        (process-environment (append '("TINYMIST_NO_MODIFY_PATH=1")
+                                     process-environment))
+        (buf "*tinymist-installer-output*")
+        (binary-location (or (getenv "XDG_BIN_HOME")
+                             (when-let ((xdg (getenv "XDG_DATA_HOME")))
+                               (expand-file-name "bin" (expand-file-name ".." xdg)))
+                             (expand-file-name "~/.local/bin"))))
+    (url-copy-file url file t)
+    (set-file-modes file #o755)
+    (start-process file buf file)
+    (display-buffer buf '((display-buffer-reuse-window
+                           display-buffer-pop-up-window)))
+    (message "Moving %s to %s" binary-location typst-ts-lsp-download-path)
+    (rename-file binary-location typst-ts-lsp-download-path t)))
 
 (provide 'typst-ts-lsp)
 ;;; typst-ts-lsp.el ends here
