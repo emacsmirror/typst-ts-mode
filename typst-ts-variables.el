@@ -49,6 +49,15 @@ NOTE this option must be set before the first loading(opening typst file)"
   "Whether `typst-ts-return' auto inserts list items or not."
   :type 'boolean)
 
+(defcustom typst-ts-common-options nil
+  "User defined compile options for `typst-ts-compile' and `typst-ts-watch'.
+The compile options will be passed in-between the command-specific
+options, to a command as in `<typst-executable> compile <target-file>
+<common-options> <specific-options>'.
+
+`<target-file>' is `typst-main-file' when set, otherwise current file."
+  :type '(repeat string)
+  :group 'typst-ts)
 
 ;; code from Auctex
 (defcustom typst-ts-math-script-display '((raise -0.5) . (raise 0.5))
@@ -78,12 +87,12 @@ The car is used for subscript, the cdr is used for superscripts."
   :type 'boolean
   :group 'typst-ts-compile)
 
-(defcustom typst-ts-compile-options ""
+(defcustom typst-ts-compile-options nil
   "User defined compile options for `typst-ts-compile'.
-The compile options will be passed to the end of
-`<typst-executable> compile <target-file>' command.
+The compile options will be passed to the end of the command, as in
+`<typst-executable> compile <target-file> <common-options> <compile-options>'.
 `<target-file>' is `typst-main-file' when set, otherwise current file."
-  :type 'string
+  :type '(repeat string)
   :group 'typst-ts-compile)
 
 (defcustom typst-ts-output-directory ""
@@ -134,10 +143,10 @@ the current buffer."
 
 (defcustom typst-ts-watch-options '()
   "User defined compile options for `typst-ts-watch'.
-The compile options will be passed to the
-`<typst-executable> watch <target-file>' sub-command.
+The compile options will be passed to the end of the command, as in
+`<typst-executable> watch <target-file> <common-options> <watch-options>'.
 `<target-file>' is `typst-main-file' when set, otherwise current file."
-  :type '(list string)
+  :type '(repeat string)
   :group 'typst-ts-watch)
 
 (defcustom typst-ts-watch-process-name "*Typst-Watch*"

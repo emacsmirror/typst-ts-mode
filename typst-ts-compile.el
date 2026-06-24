@@ -141,7 +141,7 @@ When using a prefix argument or the optional argument PREVIEW,
              typst-ts-compile-executable-location
              (shell-quote-argument target-file)
              (shell-quote-argument result-file)
-             typst-ts-compile-options)
+             (mapconcat #'identity (append typst-ts-common-options typst-ts-compile-options) " "))
      'typst-ts-compilation-mode)))
 
 

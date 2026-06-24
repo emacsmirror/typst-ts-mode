@@ -171,7 +171,6 @@ See `(info \"(elisp) Filter Functions\")'.
 PROC: process; OUTPUT: new output from PROC."
   (when (buffer-live-p (process-buffer proc))
     (with-current-buffer (process-buffer proc)
-      (erase-buffer)
       (let ((window (get-buffer-window))
             (re (rx bol "error:" (+ not-newline) "\n" (+ blank) "┌─ "
                     (+ not-newline) ":"  ; file
@@ -188,9 +187,13 @@ PROC: process; OUTPUT: new output from PROC."
                 next-match-start-pos (match-end 0)))
         ;; Insert the Error text
         (if (not res-output)
-            (when (and typst-ts-watch-auto-display-compilation-error window)
-              (delete-window window))
-          (insert res-output)
+            (progn
+              (let ((inhibit-read-only t))
+                (insert "Compiled with no errors."))
+              (when (and typst-ts-watch-auto-display-compilation-error window)
+                (delete-window window)))
+          (let ((inhibit-read-only t))
+            (insert res-output))
           (goto-char (point-min))
           (when typst-ts-watch-auto-display-compilation-error
             (typst-ts-watch-display-buffer
@@ -224,21 +227,22 @@ PROC: process; OUTPUT: new output from PROC."
       (let* ((process-name (format "%s<%s>" typst-ts-watch-process-name target-file))
              (process-buffer-name (format "%s<%s>" typst-ts-watch-process-buffer-name target-file))
              (process-buffer (get-buffer-create process-buffer-name))
-             process)
+             process cmd)
+        (setq cmd
+              (append
+               (list typst-ts-compile-executable-location "watch" target-file result-file)
+               typst-ts-common-options
+               typst-ts-watch-options))
         (with-current-buffer process-buffer
-          (erase-buffer)
-          (unless (derived-mode-p 'typst-ts-compilation-mode)
-            (typst-ts-compilation-mode)
-            (read-only-mode -1)))
+          (typst-ts-compilation-mode)
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert (format "%s" (mapconcat #'identity cmd " ")) "\n")))
         (setq process
               (apply
                #'start-process
                process-name process-buffer-name
-               typst-ts-compile-executable-location
-               "watch"
-               target-file
-               result-file
-               typst-ts-watch-options))
+               cmd))
         (set-process-query-on-exit-flag process nil)
         (process-put process 'typst-ts-watch-session-key session-key)
         (set-process-filter process #'typst-ts-watch--process-filter)
